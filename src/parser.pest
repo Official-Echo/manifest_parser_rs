@@ -1,0 +1,8 @@
+COMMENT    = { "#" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
+
+section   = { "[" ~ (!"]" ~ ANY)+ ~ "]" }
+key_value = {(ASCII_ALPHANUMERIC | "_" | "-")+ ~ "=" ~ (!NEWLINE ~ ANY)+ }
+
+manifest = {
+    SOI ~ (COMMENT | section ~ (COMMENT | key_value)*)* ~ EOI 
+}
