@@ -1,8 +1,12 @@
 COMMENT    = { "#" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
 
-section   = { "[" ~ (!"]" ~ ANY)+ ~ "]" }
-key_value = {(ASCII_ALPHANUMERIC | "_" | "-")+ ~ "=" ~ (!NEWLINE ~ ANY)+ }
+section_name = { (!"]" ~ ANY)+ }
+key          = { (ASCII_ALPHANUMERIC | "_" | "-")+ }
+value        = { (!NEWLINE ~ ANY)+ }
+
+section   = { "[" ~ section_name ~ "]" }
+key_value = { key ~ "=" ~ value }
 
 manifest = {
-    SOI ~ (COMMENT | section ~ (COMMENT | key_value)*)* ~ EOI 
+    SOI ~ (COMMENT | section ~ (COMMENT | key_value)*)* ~ EOI // equals to ^(COMMENT | section(COMMENT | key_value)*)*$
 }
