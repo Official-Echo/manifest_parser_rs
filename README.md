@@ -1,6 +1,6 @@
 > **Warning:** Work In Progress
 
-# manifest-parser-rs
+# manifest_parser_rs
 
 ### General Description
 The `manifest_parser_rs` is a work-in-progress Rust library designed to parse Cargo.toml manifest files (now supports only a simple key-value format with support for sections). It recognizes sections marked with square brackets (e.g., `[section_name]`), key-value pairs in the format `key = value`, and comments starting with `#`.
