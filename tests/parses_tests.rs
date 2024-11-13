@@ -222,6 +222,216 @@ mod tests {
             Ok(())
         }
     }
+
+    mod extended_parsing {
+        use super::*;
+
+        #[test]
+        fn features_with_multiple_entries() -> Result<()> {
+            let input = r#"[dependencies]
+			tokio = { version = "1.0.0", features = ["full", "io-std", "net"] }
+			"#;
+
+            let pair = ManifestParser::parse(Rule::dependencies_section, input)?
+                .next()
+                .unwrap();
+
+            assert!(pair.as_str().contains("features"));
+            assert!(pair.as_str().contains("full"));
+            assert!(pair.as_str().contains("io-std"));
+            assert!(pair.as_str().contains("net"));
+
+            Ok(())
+        }
+
+        #[test]
+        fn dependency_spec_edge_cases() -> Result<()> {
+            let inputs = [
+                r#"[dependencies]
+				crate_a = { version = "1.0.0", git = "https://mohylyanka.com/some.git" }"#,
+                r#"[dependencies]
+				crate_b = { path = "../local/path" }"#,
+                r#"[dependencies]
+				crate_c = { registry = "custom", workspace = true, optional = true }"#,
+            ];
+
+            for input in inputs {
+                let pair = ManifestParser::parse(Rule::dependencies_section, input)?
+                    .next()
+                    .unwrap();
+                assert!(pair.as_str().contains("crate"));
+            }
+
+            Ok(())
+        }
+
+        #[test]
+        fn invalid_numeric_identifier_in_version() {
+            let invalid_versions = ["\"001.1.0\"", "\"1.01.0\"", "\"0.0.01\""];
+
+            for version in invalid_versions {
+                assert!(
+                    ManifestParser::parse(Rule::version, version).is_err(),
+                    "Should fail for invalid version: {}",
+                    version
+                );
+            }
+        }
+
+        #[test]
+        fn all_section_names_coverage() -> Result<()> {
+            let section_inputs = [
+                r#"[lib]"#,
+                r#"[bin]"#,
+                r#"[example]"#,
+                r#"[test]"#,
+                r#"[bench]"#,
+                r#"[build-dependencies]"#,
+                r#"[target]"#,
+                r#"[badges]"#,
+                r#"[features]"#,
+                r#"[lints]"#,
+                r#"[patch]"#,
+                r#"[replace]"#,
+                r#"[profile]"#,
+                r#"[workspace]"#,
+            ];
+
+            for input in section_inputs {
+                let pair = ManifestParser::parse(Rule::section_definition, input)?
+                    .next()
+                    .unwrap();
+                assert!(pair.as_str().starts_with("["));
+            }
+
+            Ok(())
+        }
+
+        #[test]
+        fn comment_parsing() -> Result<()> {
+            let input = r#"
+        # Test
+        [package]
+        name = "test" # Test
+        version = "1.0.0"
+        "#;
+
+            let manifest = Manifest::parse(input)?;
+            assert_eq!(manifest.get_by_key("package", "name")?, "test");
+            assert_eq!(manifest.get_by_key("package", "version")?, "1.0.0");
+            Ok(())
+        }
+
+        #[test]
+        fn possible_value_characters() -> Result<()> {
+            let input = r#"[package]
+        name = "test"
+        version = "1.0.0"
+        description = "Symbols: []<>@:\\/,-_\""
+        "#;
+
+            let pair = ManifestParser::parse(Rule::package_section, input)?
+                .next()
+                .unwrap();
+            assert!(pair.as_str().contains("description"));
+            assert!(pair.as_str().contains("Symbols: []<>@:\\\\/,-_\\\""));
+
+            Ok(())
+        }
+
+        #[test]
+        fn whitespace_flexibility() -> Result<()> {
+            let input = r#"[package]
+			name    =    "test"
+			version = "1.0.0""#;
+
+            let manifest = Manifest::parse(input)?;
+            assert_eq!(manifest.get_by_key("package", "name")?, "test");
+            assert_eq!(manifest.get_by_key("package", "version")?, "1.0.0");
+            Ok(())
+        }
+    }
+
+    mod inside {
+        use super::*;
+        #[test]
+        fn extended_version_parsing() -> Result<()> {
+            let versions = [
+                "\"1.2.3\"",
+                "\"1.2.3-alpha\"",
+                "\"1.2.3+build123\"",
+                "\"1.2.3-alpha+build123\"",
+            ];
+
+            for version in versions.iter() {
+                let input = format!(
+                    r#"[package]
+       				name = "test"
+        			version = {}
+        			"#,
+                    version
+                );
+
+                let manifest = Manifest::parse(&input)?;
+                assert_eq!(
+                    manifest.get_by_key("package", "version")?,
+                    version.trim_matches('"')
+                );
+            }
+            Ok(())
+        }
+
+        #[test]
+        fn complex_dependency_spec() -> Result<()> {
+            let input = r#"[package]
+			name = "test"
+			version = "1.0.0"
+			
+			[dependencies]
+			mycrate = { version = "1.0.0", git = "https://mohylyanka.com/rust.git", path = "../local/path", registry = "custom", optional = true, workspace = true, features = ["full", "io-std", "net"] }
+			"#;
+
+            let manifest = Manifest::parse(input)?;
+            let dependency = manifest.get_by_key("dependencies", "mycrate")?;
+            assert!(dependency.contains("version"));
+            assert!(dependency.contains("git"));
+            assert!(dependency.contains("path"));
+            assert!(dependency.contains("registry"));
+            assert!(dependency.contains("optional"));
+            assert!(dependency.contains("workspace"));
+            assert!(dependency.contains("features"));
+            Ok(())
+        }
+
+        #[test]
+        fn generic_section_inside() -> Result<()> {
+            let input = r#"[package]
+			name = "test"
+			version = "1.0.0"
+
+    		[profile]
+    		opt-level = 2
+    		debug = true
+    		overflow-checks = true
+			supreme-overflows = false
+    		"#;
+
+            let manifest = Manifest::parse(input)?;
+            let profile_section = manifest.get_by_section("profile")?;
+            assert_eq!(profile_section.get("opt-level"), Some(&"2".to_string()));
+            assert_eq!(profile_section.get("debug"), Some(&"true".to_string()));
+            assert_eq!(
+                profile_section.get("overflow-checks"),
+                Some(&"true".to_string())
+            );
+			assert_eq!(
+				profile_section.get("supreme-overflows"),
+				Some(&"false".to_string())
+			);
+            Ok(())
+        }
+    }
+
     #[test]
     fn full_manifest_parsing() -> Result<()> {
         let input = r#"
