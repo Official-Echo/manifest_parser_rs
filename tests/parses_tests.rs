@@ -424,10 +424,10 @@ mod tests {
                 profile_section.get("overflow-checks"),
                 Some(&"true".to_string())
             );
-			assert_eq!(
-				profile_section.get("supreme-overflows"),
-				Some(&"false".to_string())
-			);
+            assert_eq!(
+                profile_section.get("supreme-overflows"),
+                Some(&"false".to_string())
+            );
             Ok(())
         }
     }
