@@ -6,7 +6,31 @@ use std::path::PathBuf;
 
 /// Manifest Parser CLI - A tool for parsing and inspecting manifest files
 #[derive(Parser)]
-#[command(author, version, about, long_about = None)]
+#[command(
+    name = "manifest_parser_rs",
+    version,
+    about,
+    color = clap::ColorChoice::Always,
+    help_template = "\
+\x1b[1m{name}\x1b[0m v{version}
+{about}
+
+\x1b[1mUSAGE:\x1b[0m
+    {usage}
+
+{all-args}
+
+\x1b[1mEXAMPLES:\x1b[0m
+    manifest_parser_rs parse Cargo.toml
+    manifest_parser_rs get-by-key Cargo.toml package version
+
+\x1b[1mSUPPORT:\x1b[0m
+    Official Repo: https://github.com/Official-Echo/manifest_parser_rs
+    Docs: https://docs.rs/manifest_parser_rs
+    Crate on crates.io: https://crates.io/crates/manifest_parser_rs
+    Author:  Official-Echo🔊🗣️🌀🧏‍♀️
+"
+)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -14,34 +38,41 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Parse a manifest file and display its contents
+    /// Parse and display the contents of a manifest file
+    #[command(visible_alias = "p")]
     Parse {
-        /// Path to the manifest file
-        #[arg(value_name = "FILE")]
+        /// Path to the manifest file to parse
+        #[arg(value_name = "FILE", help_heading = "ARGUMENTS")]
         file: PathBuf,
     },
-    /// Get a specific value from a section by key
+
+    /// Extract a specific value by section and key
+    #[command(visible_alias = "get")]
     GetByKey {
         /// Path to the manifest file
-        #[arg(value_name = "FILE")]
+        #[arg(value_name = "FILE", help_heading = "ARGUMENTS")]
         file: PathBuf,
-        /// Section name to look up
+        /// Section name to search in
         #[arg(value_name = "SECTION")]
         section: String,
-        /// Key name within the section
+        /// Key to look up
         #[arg(value_name = "KEY")]
         key: String,
     },
+
     /// Get all key-value pairs from a section
+    #[command(visible_alias = "section")]
     GetBySection {
         /// Path to the manifest file
-        #[arg(value_name = "FILE")]
+        #[arg(value_name = "FILE", help_heading = "ARGUMENTS")]
         file: PathBuf,
-        /// Section name to look up
+        /// Section to display
         #[arg(value_name = "SECTION")]
         section: String,
     },
-    /// Display information about authors
+
+    /// Show information about the authors
+    #[command(visible_alias = "a")]
     Authors,
 }
 
