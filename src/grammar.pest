@@ -1,0 +1,65 @@
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+COMMENT    = _{ "#" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
+
+section_name = @{
+    "lib"
+  | "bin"
+  | "example"
+  | "test"
+  | "bench"
+  | "build-dependencies"
+  | "target"
+  | "badges"
+  | "features"
+  | "lints"
+  | "patch"
+  | "replace"
+  | "profile"
+  | "workspace"
+}
+
+non_digit                             = _{ ASCII_ALPHA | "-" }
+identifier_characters                 = _{ (ASCII_DIGIT | non_digit)+ }
+numeric_identifier                    = _{ "0" | ASCII_NONZERO_DIGIT ~ ASCII_DIGIT* }
+alphanumeric_identifier               = _{ non_digit ~ identifier_characters? | identifier_characters ~ non_digit? | identifier_characters ~ non_digit ~ identifier_characters }
+pre_release_identifier                = _{ alphanumeric_identifier | numeric_identifier }
+dot_separated_pre_release_identifiers = _{ pre_release_identifier ~ ("." ~ pre_release_identifier)* }
+pre_release                           =  { dot_separated_pre_release_identifiers }
+dot_separated_build_identifiers       =  { alphanumeric_identifier ~ ("." ~ alphanumeric_identifier)* }
+build                                 =  { dot_separated_build_identifiers | ASCII_DIGIT+ }
+version_core                          = _{ numeric_identifier ~ "." ~ numeric_identifier ~ "." ~ numeric_identifier }
+version                               =  { "\"" ~ version_core ~ ("-" ~ pre_release)? ~ ("+" ~ build)? ~ "\"" }
+
+package_section = {
+    "[package]" ~ "name" ~ "=" ~ value ~ "version" ~ "=" ~ version ~ section_inside
+}
+
+features             = { "features" ~ "=" ~ "[" ~ (("\"" ~ key ~ "\"") ~ ","?)+ ~ "]" }
+dependency_version   = { "version" ~ "=" ~ version }
+dependency_git       = { "git" ~ "=" ~ "\"" ~ (!NEWLINE ~ !"\"" ~ ANY)+ ~ "\"" }
+dependency_path      = { "path" ~ "=" ~ "\"" ~ (!NEWLINE ~ !"\"" ~ ANY)+ ~ "\"" }
+dependency_registry  = { "registry" ~ "=" ~ "\"" ~ (!NEWLINE ~ !"\"" ~ ANY)+ ~ "\"" }
+dependency_workspace = { "workspace" ~ "=" ~ "true" }
+dependency_optional  = { "optional" ~ "=" ~ "true" }
+
+dependency_spec = {
+    "{" ~ (WHITESPACE? ~ (dependency_version | dependency_git | dependency_path | dependency_registry | dependency_workspace | dependency_optional | features) ~ ","?)+ ~ "}"
+}
+
+dependencies_key_value = { key ~ "=" ~ (dependency_spec | version) }
+
+dependencies_section =  {
+    ("[dependencies]" | "[dev-dependencies]") ~ dependencies_key_value*
+}
+key                  = @{ (ASCII_ALPHANUMERIC | "_" | "-")+ }
+value                = @{ (!NEWLINE ~ WHITESPACE* ~ possible_value_char)+ ~ WHITESPACE* }
+possible_value_char  = _{ ASCII_ALPHANUMERIC | "_" | "-" | "[" | "]" | "\"" | "." | "<" | ">" | "@" | ":" | "\\" | "/" | "," }
+key_value            =  { key ~ "=" ~ value }
+
+section_definition = { "[" ~ "["? ~ section_name ~ "]" ~ "]"? }
+section_inside     = { key_value* }
+section            = { section_definition ~ section_inside }
+
+manifest = {
+    SOI ~ package_section ~ (section | dependencies_section)* ~ EOI
+}
