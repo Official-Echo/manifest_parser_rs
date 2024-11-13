@@ -1,5 +1,13 @@
 # manifest_parser_rs
 
+
+[<img alt="crates.io" src="https://img.shields.io/crates/v/manifest_parser_rs?logo=rust" height="20">](https://crates.io/crates/manifest_parser_rs)
+[<img alt="docs.rs" src = "https://img.shields.io/badge/manifest_parser_rs-a?logo=docsdotrs&label=docs.rs" height="20">](https://docs.rs/manifest_parser_rs/0.2.0/manifest_parser_rs/)
+
+ - Crates.io: https://crates.io/crates/manifest_parser_rs
+ - Docs.rs: https://docs.rs/manifest_parser_rs/0.2.0/manifest_parser_rs/
+
+
 ## General Description
 The `manifest_parser_rs` is a Rust library designed to parse Cargo.toml manifest files.
 
@@ -66,17 +74,17 @@ path = "src/main.rs"
 
 ```
 ```text
-	|||  
-	|||  
-	|||  
-	|||  
-	|||  
-	|||  
-	|||  
+    |||  
+    |||  
+    |||  
+    |||  
+    |||  
+    |||  
+    |||  
   \	||| /
    \\|//  
-	\|/  
-	 v  
+    \|/  
+     v  
 Hashmap of 
  ├─ package
  │  ├─ name "manifest_parser_rs"
