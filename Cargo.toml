@@ -1,19 +1,22 @@
 [package]
 name = "manifest_parser_rs"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "A Cargo.toml manifest file parser that supports sections and key-value pairs"
 authors = ["Official-Echo <official-echo@github.com>"]
 license = "MIT"
 repository = "https://github.com/Official-Echo/manifest_parser_rs"
-#documentation = "https://docs.rs/manifest_parser_rs"
+documentation = "https://docs.rs/manifest_parser_rs"
 readme = "README.md"
-keywords = ["manifest", "parser", "ini", "configuration", "settings"]
-categories = ["parsing", "manifest"]
+keywords = ["manifest", "parser", "ini", "configuration", "semver"]
+categories = ["parsing"]
 
 [dependencies]
+anyhow = "1.0.93"
+clap = { version = "4.5.20", features = ["derive"] }
 pest = "2.7.14"
 pest_derive = "2.7.14"
+thiserror = "2.0.3"
 
 [lib]
 name = "manifest_parser_rs"
